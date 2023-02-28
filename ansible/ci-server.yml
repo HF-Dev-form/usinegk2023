@@ -1,0 +1,49 @@
+---
+- name: provision ci server
+  hosts: all
+  become: yes
+  vars_files:
+  - vars/vars.yml
+  - vars/RedHat-vars.yml
+  tasks:
+  - name: install Utilities
+    yum:
+      name:
+      - unzip
+      - wget
+      - git
+  - name: install Java
+    yum:
+      name: 
+      - "{{java_package}}"
+  - name: Install Maven
+    include_tasks: tasks/maven.yml
+    tags: ['maven'] 
+  - name: Install Jenkins
+    include_tasks: tasks/jenkins.yml
+    tags: ['jenkins']
+
+  - name: Install SonarQube
+    include_tasks: tasks/sonar.yml
+    tags: ['sonar']
+
+  - name: Install Artifactory
+    include_tasks: tasks/artifactory.yml
+    tags: ['artifactory']
+
+  - name: Install Docker
+    include_tasks: tasks/docker.yml
+    tags: ['docker']
+
+  - name: add jenkins user to docker group
+    user:
+      name: jenkins
+      groups: docker
+      append: yes
+      
+  handlers:
+  - name: restart docker service
+    systemd:
+      name: docker
+      state: restarted
+      daemon-reload: yes 
